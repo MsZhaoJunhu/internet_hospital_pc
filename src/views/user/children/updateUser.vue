@@ -21,7 +21,7 @@
         <div class="btn-par">
             <div></div>
             <div class="beforInput">
-                <button class="update-btn">
+                <button class="update-btn" @click="updatePassword">
                     <span>修改</span>
                 </button>
             </div>
@@ -30,15 +30,61 @@
 </template>
 <script>
 export default {
+    
     data() {
         return {
-            oldPassword:"123456",
+            oldPassword:"",
 
             newPassword1:"",
 
             newPassword2:"",
+
+            routerFrom: ''
         }
     },
+
+    mounted() {
+        this.routerFrom = this.$route.params.routerFrom
+    },
+
+    methods: {
+        updatePassword(){
+
+            const that = this;
+
+            console.log(that.$store.state.Info)
+
+            if(that.oldPassword==''||that.newPassword1==''||that.newPassword2==''){
+                that.$message.error('您尚有必要信息未填写!请填写后再试!')
+                return ;
+            }else if(that.newPassword1!==that.newPassword2){
+                that.$message.error('两次密码输入不一致!请重新输入')
+                that.newPassword1='';
+                that.newPassword2='';
+                return ;
+            }else{
+                that.$post("/users/doctUser/updatePassword", {
+                    mobile:that.$store.state.Info.mobile,
+                    password:that.newPassword2,
+                }).then(function(res) {
+                    if (res.code == 200) {
+                        that.$message({
+                            message: res.message,
+                            type: 'success'
+                        });
+                    } else {
+                        that.$message.error('暂不支持修改密码');
+                    }
+                }).catch(function(res) {
+                    // 请求失败处理
+                    console.log(res);
+                    that.$message.error('暂不支持修改密码');
+                });
+            }
+            
+        }
+    }
+    
 }
 </script>
 <style scoped>

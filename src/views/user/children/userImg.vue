@@ -16,37 +16,103 @@
                 </div>
             </el-upload>
         </div>
-        <button class="btn-upload">
+        <button class="btn-upload" @click="updateUserInfo">
             <span>上传</span>
         </button>
     </div>
 </template>
 <script>
 export default {
+
+    mounted () {
+
+        this.imageUrl=this.$store.state.Info.headImage
+
+        this.routerFrom = this.$route.params.routerFrom
+
+    },
+
     data() {
         return {
+
             imageUrl: '',
+
+            imgType:['image/jpeg','image/jpg','image/png'],
+
+            routerFrom: ''
+
         }
     },
+
     methods: {
+
         handleAvatarSuccess(res, file) {
             this.imageUrl = URL.createObjectURL(file.raw);
         },
 
         beforeAvatarUpload(file) {
-            const isJPG = file.type === 'image/jpeg';
 
             const isLt2M = file.size / 1024 / 1024 < 2;
 
-            if (!isJPG) {
-                this.$message.error('上传头像图片只能是 JPG 格式!');
+            if (!file.type==='image/jpeg'||!file.type==='image/jpg'||!file.type==='image/png') {
+                this.$message.error('上传头像图片只能是 jpeg/jpg/png 格式!');
             }
 
             if (!isLt2M) {
                 this.$message.error('上传头像图片大小不能超过 2MB!');
             }
 
-            return isJPG && isLt2M;
+            return isLt2M;
+        },
+        
+        updateUserInfo(){
+            const that = this;
+            if(that.imageUrl!=null&&that.imageUrl!=''){
+                if (this.routerFrom === 'apoRouter') {
+                    this.$post('/users/hospPharmacist/updateInfo', {
+                        id:that.$store.state.Info.id,
+                        headImage:that.imageUrl,
+                    }).then(res => {
+                        console.log(res);
+                        if(res.code == 200) {
+                            that.$message({
+                                message: res.message,
+                                type: 'success'
+                            });
+                        } else {
+                            that.$message.error({
+                                message: res.message,
+                            });
+                        }
+                    }).catch(e => {
+                        console.log(e);
+                    })
+                } else {
+                    that.$post("/users/doctUser/doUpdate", {
+                        id:that.$store.state.Info.id,
+                        headImage:that.imageUrl,
+                    }).then(function(res) {
+                        if (res.code == 200) {
+                            that.$message({
+                                message: res.message,
+                                type: 'success'
+                            });
+                        } else {
+                            that.$message.error({
+                                message: res.message,
+                            });
+                        }
+                    }).catch(function(res) {
+                        // 请求失败处理
+                        console.log(res);
+                    });
+                }
+            }else{
+                that.$message({
+                    message: '请选择需要上传的图片',
+                    type: 'error'
+                });
+            }
         }
     },
 }
@@ -95,6 +161,10 @@ export default {
     .all-upload-img /deep/ .el-upload{
         border: 1px solid #e0e0e0 !important;
         border-radius: 0 !important;
+    }
+
+    .all-upload-img /deep/ img{
+        border-radius: 50%;
     }
 
     .change-user-img p:first-child{

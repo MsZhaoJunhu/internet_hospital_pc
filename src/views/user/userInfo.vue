@@ -17,38 +17,86 @@
 </template>
 <script>
 export default {
+    mounted() {
+        this.routerFrom = this.$route.params.routerFrom;
+    },
+
     data() {
         return {
+            
             activeMenu:1,
 
-            routeName:this.$route.name,
+            routerFrom: ''
 
         }
     },
     methods: {
         changeActiveMenu(index){
             this.activeMenu=index
-
-            switch (index) {
-
-                case 1:
-                    this.$router.push({name:"personInfo"})
-                    break;
-
-                case 2:
-                    this.$router.push({name:"userImg"})
-                    break;
-                    
-                case 3:
-                    this.$router.push({name:"accountInfo"})
-                    break;
-
-                case 4:
-                    this.$router.push({name:"updateUser"})
-                    break;
-                    
-                default:
-                    break;
+            if(this.routerFrom==='apoRouter'){
+                switch (index) {
+    
+                    case 1:
+                        this.$router.push({
+                            name:"apoInfo",
+                            params: {
+                                routerFrom: this.routerFrom
+                            }
+                        })
+                        break;
+    
+                    case 2:
+                        this.$router.push({
+                            name:"apoImg",
+                            params: {
+                                routerFrom: this.routerFrom
+                            }
+                        })
+                        break;
+                        
+                    case 3:
+                        this.$router.push({
+                            name:"apoAccountInfo",
+                            params: {
+                                routerFrom: this.routerFrom
+                            }
+                        })
+                        break;
+    
+                    case 4:
+                        this.$router.push({
+                            name:"apoUpdateUser",
+                            params: {
+                                routerFrom: this.routerFrom
+                            }
+                        })
+                        break;
+                        
+                    default:
+                        break;
+                }
+            } else {
+                switch (index) {
+    
+                    case 1:
+                        this.$router.push({name:"personInfo"})
+                        break;
+    
+                    case 2:
+                        this.$router.push({name:"userImg"})
+                        break;
+                        
+                    case 3:
+                        this.$router.push({name:"accountInfo"})
+                        break;
+    
+                    case 4:
+                        this.$router.push({name:"updateUser"})
+                        break;
+                        
+                    default:
+                        break;
+                }
             }
         },
     },

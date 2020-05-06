@@ -5,7 +5,7 @@
 				<span>已接诊</span>
 			</div>
 			<div class="myheal-top-right">
-				<div>
+				<!-- <div>
 					<span>选择时间</span>
 					<el-date-picker v-model="value1" type="date" placeholder="选择日期">
 					</el-date-picker>
@@ -16,14 +16,14 @@
 						<div :class="healType==2?'active':''" @click="healType=2">电话问诊</div>
 						<div class="heal-type-bom" :class="healType==1?'active1':'active2'"></div>
 					</div>
-				</div>
+				</div> -->
 			</div>
 		</div>
 		<div class="my-heal-list">
 			<heal-list :personInfo="item" v-for="(item,i) in personInfo" :key="i"></heal-list>
 		</div>
 		<div class="my-heal-paging">
-			<el-pagination background layout="pager,next" next-text="下一页" :page-size="6" :total="personInfo.length">
+			<el-pagination background layout="pager,next" next-text="下一页" :page-size="6" :total="personInfo.length" :hide-on-single-page='true' >
 			</el-pagination>
 		</div>
 	</div>
@@ -32,78 +32,43 @@
 <script>
 	import healList from '@/components/healList';
 	export default {
+		created() {
+			this.getHealedList();
+		},
+		methods: {
+			getHealedList() {
+				if(this.current > this.totalpage) {
+					this.$message("没有更多数据...");
+					return;
+				}
+				this.$post('/users/patRegisteredOver/findPatientList', {
+					current: this.current,
+					hospId: 1,
+					doctorId:this.$store.state.Info.id,
+					pageSize: 4
+				}).then(res => {
+					var data = res.data;
+					this.totalpage = data.total;
+					this.personInfo = data.records;
+                    this.$store.commit("indexNumber/SET_STATE", {'b':res.total});
+				}).catch(e => {
+					console.log(e);
+				})
+			}
+		},
 		data() {
 			return {
+				current: 1,
+
+				totalpage: 1,
+
 				value1: "",
 
 				value2: "",
 
 				healType: 1,
 
-				personInfo: [
-					{
-						img: require('@/assets/images/perImg.png'),
-						name: "刘晓霞",
-						age: "50",
-						gender: "女",
-						msg: "之前血压一直维持低压100左右，高压140左右，上个月有一次外面干活感到头特别的晕",
-						type: "图文问诊"
-					},
-
-					{
-						img: require('@/assets/images/perImg.png'),
-						name: "刘晓霞",
-						age: "50",
-						gender: "女",
-						msg: "之前血压一直维持低压100左右，高压140左右，上个月有一次外面干活感到头特别的晕",
-						type: "图文问诊"
-					},
-
-					{
-						img: require('@/assets/images/perImg.png'),
-						name: "刘晓霞",
-						age: "50",
-						gender: "女",
-						msg: "之前血压一直维持低压100左右，高压140左右，上个月有一次外面干活感到头特别的晕",
-						type: "图文问诊"
-					},
-
-					{
-						img: require('@/assets/images/perImg.png'),
-						name: "刘晓霞",
-						age: "50",
-						gender: "女",
-						msg: "之前血压一直维持低压100左右，高压140左右，上个月有一次外面干活感到头特别的晕",
-						type: "图文问诊"
-					},
-
-					{
-						img: require('@/assets/images/perImg.png'),
-						name: "刘晓霞",
-						age: "50",
-						gender: "女",
-						msg: "之前血压一直维持低压100左右，高压140左右，上个月有一次外面干活感到头特别的晕",
-						type: "图文问诊"
-					},
-
-					{
-						img: require('@/assets/images/perImg.png'),
-						name: "刘晓霞",
-						age: "50",
-						gender: "女",
-						msg: "之前血压一直维持低压100左右，高压140左右，上个月有一次外面干活感到头特别的晕",
-						type: "图文问诊"
-					},
-
-					{
-						img: require('@/assets/images/perImg.png'),
-						name: "刘晓霞",
-						age: "50",
-						gender: "女",
-						msg: "之前血压一直维持低压100左右，高压140左右，上个月有一次外面干活感到头特别的晕",
-						type: "图文问诊"
-					},
-				],
+				personInfo: [],
 			}
 		},
 		

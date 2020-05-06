@@ -2,10 +2,12 @@
  * 请求拦截、相应拦截、错误统一处理
  */
 import axios from 'axios';
-import Toast from '@nutui/nutui/dist/packages/toast/toast.js';  // 加载构建后的JS
-import '@nutui/nutui/dist/packages/toast/toast.css';  //加载构建后的CSS
+import {
+	Loading
+} from 'element-ui';
 
-let Loading = null
+
+let load = null
 // 环境的切换
 if (process.env.NODE_ENV == 'development') {
 	axios.defaults.baseURL = "/api";
@@ -13,7 +15,7 @@ if (process.env.NODE_ENV == 'development') {
 } else if (process.env.NODE_ENV == 'debug') {
 	axios.defaults.baseURL = '';
 } else if (process.env.NODE_ENV == 'production') {
-	axios.defaults.baseURL = '';
+	axios.defaults.baseURL = 'http://122.112.206.233:9528';
 }
 
 // 请求超时时间
@@ -24,7 +26,15 @@ axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded
 // 请求拦截器
 axios.interceptors.request.use(
 	config => {
-		Loading = Toast.loading('加载中...');
+		load = Loading.service({
+			lock: true,
+			text: '加载数据中...',
+			background: 'rgba(255,255,255,.8)'
+		});
+		let token = localStorage.getItem('token')
+		if(token){
+			config.headers['X-TOKEN'] = token;
+		}
 		return config;
 	},
 	error => {
@@ -34,7 +44,7 @@ axios.interceptors.request.use(
 // 响应拦截器
 axios.interceptors.response.use(
 	response => {
-		Loading.hide()
+		load.close()
 		if (response.status === 200) {
 			return Promise.resolve(response);
 		} else {
@@ -43,22 +53,23 @@ axios.interceptors.response.use(
 	},
 	// 服务器状态码不是200的情况    
 	error => {
-		Loading.hide()
+		load.close()
 		if (error.response.status) {
-			switch (error.response.status) {
-				case 401:
-					alert('开发者并未配置401')
-					break;
-				case 403:
-					alert('开发者并未配置403')
-					break;
-				case 404:
-					alert('开发者并未配置404')
-					break;
-					// 其他错误，直接抛出错误提示                
-				default:
-					alert('开发者并未配置其他错误(不包含401,403,404)')
-			}
+			// switch (error.response.status) {
+			// 	case 401:
+			// 		break;
+			// 	case 403:
+			// 		break;
+			// 	case 404:
+			// 		break;
+			// 	case 500:
+			// 		console.log('前后端需要统一')
+			// 		this.$router.push('/login')
+			// 		localStorage.removeItem('token')
+			// 		break;
+			// 	default:
+			// }
+
 			return Promise.reject(error.response);
 		}
 	}

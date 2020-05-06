@@ -4,7 +4,13 @@
             <img :src="item.img" alt="">
             <img :src="item.imgActive" alt="">
             <span>{{item.name}}</span>
-            <i :style="{background:item.color}">{{item.number}}</i>
+            <i :style="{background:item.color}" v-show="item.numberStr=='a'&&$store.state.indexNumber.a>0">{{$store.state.indexNumber.a}}</i>
+            <i :style="{background:item.color}" v-show="item.numberStr=='b'&&$store.state.indexNumber.b>0">{{$store.state.indexNumber.b}}</i>
+            <i :style="{background:item.color}" v-show="item.numberStr=='c'&&$store.state.indexNumber.c>0">{{$store.state.indexNumber.c}}</i>
+            <i :style="{background:item.color}" v-show="item.numberStr=='d'&&$store.state.indexNumber.d>0">{{$store.state.indexNumber.d}}</i>
+            <i :style="{background:item.color}" v-show="item.numberStr=='e'&&$store.state.indexNumber.e>0">{{$store.state.indexNumber.e}}</i>
+            <!-- <i :style="{background:item.color}" v-show="item.numberStr=='f'&&$store.state.indexNumber.f>0">{{$store.state.indexNumber.f}}</i>
+            <i :style="{background:item.color}" v-show="item.numberStr=='g'&&$store.state.indexNumber.g>0">{{$store.state.indexNumber.g}}</i> -->
         </div>
     </div>
 </template>
@@ -33,7 +39,7 @@ export default {
     methods: {
         sendI(i,r){
             this.$emit('i',i)
-            this.$router.push(r)
+            this.$router.push({name:r})
         }
     },
 }
@@ -80,7 +86,7 @@ export default {
         display: none;
     }
     
-    .header-myHeal>div>img+span+i{
+    .header-myHeal>div i{
         font-style: normal;
         margin-left: 3px;
         display: block;

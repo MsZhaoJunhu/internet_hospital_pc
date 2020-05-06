@@ -3,17 +3,20 @@
         <div class="user-info-par">
             <div class="user-info">
                 <div class="user-info-img">
-                    <img src="../assets/images/userImg.png" alt="">
+                    <!-- that.$store.state.Info.headImage -->
+                    <img :src="this.$store.state.Info.headImage||'../assets/images/userImg.png'" alt="">
                 </div>
-                <p class="user-name">{{user.name}}</p>
+                <p class="user-name">{{this.$store.state.Info.realName||'暂无'}}</p>
                 <p class="user-isBool">
-                    <span>{{user.post}}</span>
-                    <router-link to="/" v-show="user.isBool">已认证</router-link>
-                    <router-link to="/" v-show="!user.isBool">未认证</router-link>
+                    <span v-show="this.$store.state.Info.list[0]">{{this.$store.state.Info.list[0].titleName}}</span>
+                    <span v-show="!this.$store.state.Info.list[0]">暂无</span>
+                    <router-link to="/" v-show="isBool">已认证</router-link>
+                    <router-link to="/" v-show="!isBool">未认证</router-link>
                 </p>
                 <p class="user-details">
-                    <span>{{user.adress}}</span>
-                    <span>{{user.type}}</span>
+                    <span v-show="this.$store.state.Info.list[0]">{{this.$store.state.Info.list[0].hospitalName}}</span>
+                    <span v-show="!this.$store.state.Info.list[0]">暂无</span>
+                    <span>{{this.$store.state.Info.list[0].deptName||'暂无'}}</span>
                 </p>
             </div>
         </div>
@@ -21,9 +24,9 @@
 </template>
 <script>
 export default {
-    data() {
+    data () {
         return {
-            user:{name:"张晓龙",post:"主任医师",isBool:'true',adress:"重庆市中医院南桥寺院",type:"骨科"}
+            isBool:true
         }
     },
 }
@@ -65,6 +68,11 @@ export default {
         height: 86px;
         border-radius: 50%;
         overflow: hidden;
+    }
+
+    .user-info-img img{
+        width: 86px;
+        border-radius: 50%;
     }
 
     .user-name{

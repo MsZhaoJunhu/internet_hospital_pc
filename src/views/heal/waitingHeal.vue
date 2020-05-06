@@ -6,43 +6,92 @@
             </div>
             <div class="myheal-top-right">
                 <div>
-                    <div class="refresh-par">
-                        <img src="@/assets/images/ref.png" alt="">
+                    <div class="refresh-par" @click="freshData">
+                        <img src="@/assets/images/ref.png" alt />
                         <span>刷新</span>
                     </div>
                 </div>
             </div>
         </div>
         <div class="my-waiting-list">
-            <waiting-list :waitingPersonInfo="item" v-for="(item,i) in waitingPersonInfo" :key="i"></waiting-list>
+            <waiting-list waitingHeal @healpaition="healed" @cancle="cancel" :waitingPersonInfo="item" v-for="(item,i) in waitingPersonInfo" :key="i"></waiting-list>
         </div>
     </div>
 </template>
 <script>
-import waitingList from '@/components/waitingList';
-export default {
-    components:{
-        waitingList
-    },
+    import waitingList from "@/components/waitingList";
+    export default {
+        components: {
+            waitingList
+        },
+        created () {
 
-    data() {
-        return {
-            waitingPersonInfo:[
-                {img:require('@/assets/images/perImg.png'),name:"刘晓霞",age:"50",gender:"女",msg:"之前血压一直维持低压100左右，高压140左右，上个月有一次外面干活感到头特别的晕",type:"图文问诊",time:"2020-02-19 10:27"},
-                
-                {img:require('@/assets/images/perImg.png'),name:"刘晓霞",age:"50",gender:"女",msg:"之前血压一直维持低压100左右，高压140左右，上个月有一次外面干活感到头特别的晕",type:"图文问诊",time:"2020-02-19 10:27"},
-            ],
-        }
-    },
-}
+            this.getPatientWatingList();
+
+        },
+        methods: {
+            freshData(){
+				this.getData();
+            },
+
+            getPatientWatingList() {
+                const that = this;
+                that.$get('/patRegisteredWatingDiagnosis/findWatingPatientList', {
+                    hospId: 1
+                }).then(res => {
+                    if(res.code==='200'){
+                        that.waitingPersonInfo = res.data;
+                        that.$store.commit("indexNumber/SET_STATE", {'e':res.data.length});
+                    }
+                })
+            },
+
+            cancel(orderNo) {
+                const that = this;
+                that.$get('/patRegisteredWatingDiagnosis/watingList/Choose', {
+                    chooseType: 2,
+                    orderNo: orderNo
+                }).then(res => {
+                    that.getPatientWatingList();
+                    // this.$router.push({
+                    //     name: 'chat',
+                    //     params: res
+                    // })
+                }).catch(e => {
+                    console.log(e)
+                });
+            },
+
+            healed(orderNo) {
+                this.$get('/patRegisteredWatingDiagnosis/watingList/Choose', {
+                    chooseType: 1,
+                    orderNo: orderNo
+                }).then(res => {
+                    this.$router.push({
+                        name: 'mychat',
+                        params: orderNo
+                    })
+                }).catch(e => {
+                    console.log(e);
+                })
+            },
+            
+        },
+
+        data() {
+            return {
+                waitingPersonInfo: []
+            };
+        },
+    };
 </script>
 <style scoped>
-    .my-heal-content{
+    .my-heal-content {
         background: #fff;
         padding: 32px;
     }
 
-    .my-heal-top{
+    .my-heal-top {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -51,18 +100,18 @@ export default {
         margin-bottom: 35px;
     }
 
-    .myheal-top-left > span{
+    .myheal-top-left>span {
         font-size: 17px;
         color: #353535;
     }
 
-    .myheal-top-right>div{
+    .myheal-top-right>div {
         display: flex;
         justify-content: space-around;
         align-items: center;
     }
 
-    .heal-type{
+    .heal-type {
         width: 164px;
         height: 33px;
         display: flex;
@@ -71,20 +120,20 @@ export default {
         position: relative;
     }
 
-    .heal-type-bom{
+    .heal-type-bom {
         position: absolute;
         width: 72px;
         height: 3px !important;
         background: #5a75f6;
-        transition: all .5s;
+        transition: all 0.5s;
         bottom: 0;
     }
 
-    .heal-type-bom.active2{
+    .heal-type-bom.active2 {
         transform: translateX(92px);
     }
 
-    .heal-type>div{
+    .heal-type>div {
         width: 72px;
         height: 100%;
         font-size: 16px;
@@ -93,38 +142,39 @@ export default {
         box-sizing: border-box;
     }
 
-    .heal-type>div.active{
+    .heal-type>div.active {
         color: #5a75f6;
     }
 
-    .myheal-top-right>div span{
+    .myheal-top-right>div span {
         font-size: 16px;
         margin-right: 15px;
     }
 
-    .myheal-top-right>div /deep/ .el-input,.myheal-top-right>div /deep/ .el-input__inner{
+    .myheal-top-right>div /deep/ .el-input,
+    .myheal-top-right>div /deep/ .el-input__inner {
         width: 178px;
         height: 33px;
     }
 
-    .myheal-top-right>div /deep/ .el-input__icon{
+    .myheal-top-right>div /deep/ .el-input__icon {
         line-height: 33px;
     }
 
-    .myheal-top-right>div /deep/ .el-input+.el-input{
+    .myheal-top-right>div /deep/ .el-input+.el-input {
         margin-left: 12px;
         margin-right: 25px;
     }
 
-    .my-heal-list>div+div{
+    .my-heal-list>div+div {
         margin-top: 16px;
     }
 
-    .my-heal-paging{
+    .my-heal-paging {
         padding-top: 50px;
     }
 
-    .my-heal-paging /deep/ .number{
+    .my-heal-paging /deep/ .number {
         width: 37px;
         height: 37px;
         border-radius: 50% !important;
@@ -138,17 +188,17 @@ export default {
         font-size: 14px;
     }
 
-    .my-heal-paging /deep/ .el-pagination{
+    .my-heal-paging /deep/ .el-pagination {
         margin: 0;
         padding: 0;
     }
 
-    .my-heal-paging /deep/ .number.active{
+    .my-heal-paging /deep/ .number.active {
         color: #fff !important;
         background-color: #5a75f6 !important;
     }
 
-    .my-heal-paging /deep/ .btn-next{
+    .my-heal-paging /deep/ .btn-next {
         width: 80px;
         height: 37px;
         border-radius: 37px;
@@ -158,37 +208,37 @@ export default {
         background-color: #fff;
     }
 
-    .refresh-par{
+    .refresh-par {
         display: flex;
         justify-content: flex-start;
         align-items: center;
         cursor: pointer;
     }
 
-    .refresh-par img{
+    .refresh-par img {
         width: 16px;
         height: 16px;
         margin-right: 8px;
     }
 
-    .myheal-top-right .refresh-par span{
+    .myheal-top-right .refresh-par span {
         font-size: 14px;
         color: #5a75f6;
         margin: 0;
     }
 
-    .my-waiting-list{
+    .my-waiting-list {
         display: flex;
         justify-content: flex-start;
         align-items: center;
         flex-wrap: wrap;
     }
 
-    .my-waiting-list>.waiting-list-par:nth-child(even){
+    .my-waiting-list>.waiting-list-par:nth-child(even) {
         margin-left: 44px;
     }
-    
-    .my-waiting-list>.waiting-list-par:nth-child(n+3){
+
+    .my-waiting-list>.waiting-list-par:nth-child(n + 3) {
         margin-top: 16px;
     }
 </style>

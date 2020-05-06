@@ -1,48 +1,49 @@
 <template>
     <div class="checkPrescription-content">
         <div class="checkPrescription-topTitle">
-            <span>{{info.state==1?'正在审核':info.state==2?'未通过':'已开处方'}}</span>
-            <a href="javascript:history.back();">返回</a>
+            <span>{{content.auditStatus==1?'正在审核':content.auditStatus==2?'已开处方':'未通过'}}</span>
+            <a href="javascript:history.back(-1);">返回</a>
         </div>
-        <div v-if="info.state!=3" class="checkPrescription-info">
-            <span v-show="info.state==1">处方正在审核,请耐心等待</span>
-            <span v-show="info.state==2">未通过原因:药品调剂或剂量出现差错 </span>
+        <div v-if="content.auditStatus!=2" class="checkPrescription-info">
+            <span v-show="content.auditStatus==1">处方正在审核,请耐心等待</span>
+            <span v-show="content.auditStatus==3">未通过原因:药品调剂或剂量出现差错 </span>
         </div>
-        <div class="checkPrescription-button-par" v-if="info.state==2">
+        <div class="checkPrescription-button-par" v-if="content.auditStatus==3">
             <button>重开处方</button>
         </div>
         <div class="prescription-parent">
             <p class="top-title">处方笺</p>
             <div class="prescription-parent-number">
-                <span>NO:{{info.no}}</span>
-                <span>{{info.time}}</span>
+                <span>NO:{{content.prescribeNo}}</span>
+                <span>{{content.createTime}}</span>
             </div>
             <div class="prescription-parent-userInfo">
                 <p>
-                    <span>{{info.name}}</span>
-                    <span>{{info.age}}</span>
-                    <span>{{info.gender}}</span>
-                    <span>{{info.adress}}</span>
+                    <span>{{content.patPatient.realName}}</span>
+                    <span>{{content.patPatient.age}}</span>
+                    <span>{{content.patPatient.sex==1?'男':'女'}}</span>
+                    <span>{{content.patPatient.address}}</span>
                 </p>
                 <p>疾病诊断：</p>
-                <p v-for="(item,i) in info.illness" :key="i">{{i+1}}.{{item}}</p>
+                <p>1.{{content.preliminaryDiagnosis}}</p>
             </div>
             <div class="prescription-parent-userInfo">
                 <p>医生嘱托：</p>
-                <p v-for="(item,i) in info.entrust" :key="i">{{item}}</p>
+                <p>{{content.exhort}}</p>
             </div>
             <div class="prescription-parent-userInfo">
                 <p>Rp：</p>
-                <div v-for="(item,i) in info.rp" :key="i" class="prescription-parent-rp">
+                <div v-for="(item,i) in content.doctPrescriptExtendList" :key="i" class="prescription-parent-rp">
                     <div>
                         {{i+1}}.
                     </div>
                     <div>
-                        <div v-for="(items,k) in item.drug" :key="k" class="prescription-rp-div">
-                            <div>{{items.name}}</div>
-                            <div>{{items.amount}}</div>
+                        <div class="prescription-rp-div">
+                            <div>{{item.sysDrugCommonName}}</div>
+                            <div>{{item.drugNumber}}{{item.packingUnit}} : {{item.content}}{{item.contentUnit}}*{{item.packingQuantity}}{{item.packingUnit}}</div>
+                            <!-- <div><span>{{item.capacity}}{{item.capacityUnit}}/{{item.packingUnit}}*{{item.drugNumber}}{{item.packingUnit}}</span></div> -->
                         </div>
-                        <p>{{item.usage}}</p>
+                        <p class="prescription-parent-careful">用法：{{item.drugUsage}}</p>
                     </div>
                 </div>
             </div>
@@ -50,27 +51,27 @@
                 <div class="prescription-docter-par">
                     <p>
                         <span>方案医生:</span>
-                        <span>{{info.doctor.programmeName}}</span>
-                        <span>{{info.doctor.post}}</span>
-                        <span>{{info.doctor.time}}</span>
+                        <span>{{content.doctUser.realName}}</span>
+                        <span>{{content.docBelong.titleName}}</span>
+                        <span v-show="content.auditTime">{{content.auditTime}}</span>
                     </p>
                     <p>
                         <span></span>
-                        <span>{{info.doctor.hospital}}</span>
-                        <span>{{info.doctor.subject}}</span>
+                        <span>{{content.docBelong.hospitalName}}</span>
+                        <span>{{content.departmentName}}</span>
                     </p>
                     <p class="special-span">
                         <span>处方医生：</span>
-                        <span>{{info.doctor.prescriptionName}}</span>
-                        <span v-if="info.doctor.prescriptionName2">处方药师：</span>
-                        <span v-if="info.doctor.prescriptionName2">{{info.doctor.prescriptionName2}}</span>
+                        <span :class="content.auditStatus==2?'special-span-bgImg':''">{{content.doctUser.realName}}</span>
+                        <span v-if="content.hospPharmacistName">处方药师：</span>
+                        <span :class="content.auditStatus==2?'special-span-bgImg':''" v-if="content.hospPharmacistName">{{content.hospPharmacistName}}</span>
                     </p>
                 </div>
                 <div>
                     <img src="@/assets/images/cy.png" alt="">
                 </div>
             </div>
-            <button v-show="info.state==3" class="btn-ok">通过审核</button>
+            <button v-show="info.state==3" class="btn-ok">已通过审核</button>
         </div>
     </div>
 </template>
@@ -80,7 +81,7 @@ export default {
         return {
             // 1.正在审核,2.审核未通过.3.审核通过.
             info:{
-                state:3,
+                state:1,
 
                 no:"612354556922",
 
@@ -135,9 +136,33 @@ export default {
 
                     subject:"皮肤科"
                 }
-            }
+            },
+            content:""
         }
     },
+
+    methods: {
+        func(){
+            const that = this;
+        
+            that.$get('/doctPrescript/getDoctPrescriptForFull',{
+                doctorId:that.$store.state.Info.id,
+                hospId:1,
+                Id:that.$route.query.id,
+                orderNo:that.$route.query.orderNo,
+                prescribeNo:that.$route.query.prescribeNo||null,
+            }).then(res => {
+                that.content=res.data
+                console.log(res.data)
+            }).catch(err => {
+                console.log(err)
+            })
+        }
+    },
+
+    created () {
+        this.func();
+    }
 }
 </script>
 <style scoped>
@@ -194,6 +219,7 @@ export default {
         background: #5a75f6;
         color: #fff;
         text-align: center;
+        cursor: pointer;
     }
 
     .prescription-parent{
@@ -254,6 +280,10 @@ export default {
         padding-top: 20px;
     }
 
+    .prescription-parent-userInfo .prescription-parent-careful{
+        color: #425997;
+    }
+
     .prescription-parent-rp{
         margin-top: 20px;
         display: flex;
@@ -293,7 +323,7 @@ export default {
         margin: 0;
     }
 
-    .special-span span:nth-child(even){
+    .special-span span.special-span-bgImg{
         display: block;
         width: 74px;
         height: 34px;

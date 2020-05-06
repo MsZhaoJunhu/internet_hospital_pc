@@ -2,16 +2,16 @@
     <div class="accountInfo">
         <div>
             <div>账号</div>
-            <span>15823920687</span>
+            <span>{{this.$store.state.Info.username}}</span>
         </div>
         <div>
             <div>绑定手机号</div>
-            <span>15823920687</span>
+            <span>{{this.$store.state.Info.mobile}}</span>
         </div>
-        <div>
+        <!-- <div>
             <div>邮箱地址</div>
             <span>378104066@qq.com</span>
-        </div>
+        </div> -->
     </div>
 </template>
 <script>

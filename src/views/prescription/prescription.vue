@@ -3,10 +3,10 @@
         <div class="prescription-content-topTitle">
             <span>已开处方</span>
             <div class="prescription-topTitle-right">
-                <span :class="activeMenu==1?'active':''" @click="activeMenu=1">审核已通过</span>
-                <span :class="activeMenu==2?'active':''" @click="activeMenu=2">审核未通过</span>
-                <span :class="activeMenu==3?'active':''" @click="activeMenu=3">正在审核</span>
-                <div class="bottom-line"  :class="activeMenu==1?'active1':activeMenu==2?'active2':'active3'"></div>
+                <span :class="activeMenu==2?'active':''" @click="changeStatus(2)">审核已通过</span>
+                <span :class="activeMenu==3?'active':''" @click="changeStatus(3)">审核未通过</span>
+                <span :class="activeMenu==1?'active':''" @click="changeStatus(1)">正在审核</span>
+                <div class="bottom-line"  :class="activeMenu==2?'active1':activeMenu==3?'active2':'active3'"></div>
             </div>
         </div>
         <div>
@@ -20,21 +20,23 @@
                     <td class="prescription-table-td6">药品详情</td>
                     <td class="prescription-table-td7">状态</td>
                 </tr>
-                <tr v-for="(item,i) in prescriptionList" :key="i" @click="checkDetails">
-                    <td class="prescription-table-td1">{{item.name}}</td>
-                    <td class="prescription-table-td2">{{item.age}}</td>
-                    <td class="prescription-table-td3">{{item.gender}}</td>
-                    <td class="prescription-table-td4">{{item.time}}</td>
-                    <td class="prescription-table-td5">{{item.prescription}}</td>
-                    <td class="prescription-table-td6">{{item.prescriptionDetail}}</td>
+                <tr v-for="(item,i) in prescriptionList" :key="i" @click="checkDetails(item.id,item.orderNo,item.prescribeNo)">
+                    <td class="prescription-table-td1">{{item.patPatient.realName||'暂无'}}</td>
+                    <td class="prescription-table-td2">{{item.patPatient.age||'暂无'}}</td>
+                    <td class="prescription-table-td3">{{item.patPatient.sex==1?'男':'女'||'暂无'}}</td>
+                    <td class="prescription-table-td4">{{item.createTime||'暂无'}}</td>
+                    <td class="prescription-table-td5">{{item.preliminaryDiagnosis||'暂无'}}</td>
+                    <td class="prescription-table-td6">
+                        <p v-for="(s,i) in item.doctPrescriptExtendList">{{s.sysDrugCommonName||'暂无'}}</p>
+                    </td>
                     <td class="prescription-table-td7">
-                        <button :class="item.state==1?'正在审核':item.state==2?'审核通过':'审核通过'">{{item.state==1?'正在审核':item.state==2?'审核通过':'审核通过'}}</button>
+                        <button :class="item.auditStatus==1?'正在审核':item.auditStatus==2?'审核通过':'审核未通过'">{{item.auditStatus==1?'正在审核':item.auditStatus==2?'审核通过':'审核未通过'}}</button>
                     </td>
                 </tr>
             </table>
         </div>
-        <div class="pagination-par">
-            <el-pagination background layout="pager,next" next-text="下一页" :page-size="8" :total="prescriptionList.length">
+        <div class="pagination-par" v-if="prescriptionList.length>0">
+            <el-pagination background layout="pager,next" next-text="下一页" :page-size="8" :total="prescriptionList.length||0">
             </el-pagination>
         </div>
     </div>
@@ -44,35 +46,65 @@ export default {
     data() {
         return {
             // 1.正在审核,2.审核未通过.3.审核通过.
-            prescriptionList:[
-                {name:"张兰",age:20,gender:"女",time:"2020-02-18",prescription:"高血压",prescriptionDetail:"高血压药降压药",state:"1"},
+            prescriptionList:[],
 
-                {name:"张兰",age:20,gender:"女",time:"2020-02-18",prescription:"高血压",prescriptionDetail:"高血压药降压药",state:"2"},
-
-                {name:"张兰",age:20,gender:"女",time:"2020-02-18",prescription:"高血压",prescriptionDetail:"高血压药降压药",state:"3"},
-
-                {name:"张兰",age:20,gender:"女",time:"2020-02-18",prescription:"高血压",prescriptionDetail:"高血压药降压药",state:"1"},
-
-                {name:"张兰",age:20,gender:"女",time:"2020-02-18",prescription:"高血压",prescriptionDetail:"高血压药降压药",state:"1"},
-
-                {name:"张兰",age:20,gender:"女",time:"2020-02-18",prescription:"高血压",prescriptionDetail:"高血压药降压药",state:"1"},
-
-                {name:"张兰",age:20,gender:"女",time:"2020-02-18",prescription:"高血压",prescriptionDetail:"高血压药降压药",state:"1"},
-
-                {name:"张兰",age:20,gender:"女",time:"2020-02-18",prescription:"高血压",prescriptionDetail:"高血压药降压药",state:"1"},
-
-                {name:"张兰",age:20,gender:"女",time:"2020-02-18",prescription:"高血压",prescriptionDetail:"高血压药降压药",state:"1"},
-            ],
+            // {name:"张兰",age:20,id:'12',gender:"女",time:"2020-02-18",prescription:"高血压",prescriptionDetail:"高血压药降压药",state:"1"},
 
             activeMenu:1,
+
+            status:1,
         }
     },
 
     methods: {
-        checkDetails(){
-            this.$router.push({name:"checkPrescription"})
+        checkDetails(a,b,c){
+            this.$router.push({name:"checkPrescription",query:{
+                Id:a,
+                orderNo:b,
+                prescribeNo:c,
+
+            }})
+        },
+
+        getDate(){
+            const that = this;
+            
+            that.$get('/doctPrescript/getDoctPrescriptForDoc',{
+                doctorId:that.$store.state.Info.id,
+                auditStatus:that.status,
+				hospId:1
+            }).then(res => {
+                that.prescriptionList=res.data||[]
+            }).catch(err => {
+                console.log(err)
+            })
+        },
+
+        changeStatus(i){
+            const that = this;
+
+            that.activeMenu=i
+            that.status=i
+            
+            that.$get('/doctPrescript/getDoctPrescriptForDoc',{
+                doctorId:that.$store.state.Info.id,
+                auditStatus:that.status,
+				hospId:1
+            }).then(res => {
+                that.prescriptionList=res.data
+                console.log(res.data)
+            }).catch(err => {
+                console.log(err)
+            })
         }
+        
     },
+
+    mounted () { 
+        this.activeMenu=1;
+        this.status=1;
+        this.getDate();
+    }
 }
 </script>
 <style scoped>
@@ -163,7 +195,14 @@ export default {
     }
 
     .prescription-table td{
+        height: 54px;
+        line-height: 54px;
         text-align: center;
+        overflow:hidden; 
+        text-overflow:ellipsis;
+        display:-webkit-box; 
+        -webkit-box-orient:vertical;
+        -webkit-line-clamp:2; 
     }
 
     .prescription-table tr:nth-child(odd){
@@ -202,6 +241,10 @@ export default {
     .prescription-table-td6{
         width: 120px;
     }
+    .prescription-table-td6 p{
+        height: auto;
+        display: inline-block;
+    }
 
     .prescription-table-td7{
         width: 75px;
@@ -216,15 +259,15 @@ export default {
     }
 
     .正在审核{
-        background: #39bef9;
+	    background-color: #39bef9;
+    }
+
+    .审核未通过{
+	    background-color: #94a1dc;
     }
 
     .审核通过{
-        background: #ff5050;
-    }
-
-    .审核通过{
-        background: #94a1dc;
+        background-color: #ff5050;
     }
 
     .pagination-par{

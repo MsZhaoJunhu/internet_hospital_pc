@@ -4,49 +4,64 @@
             <div class="chat-room-left">
                 <div class="chat-info-top">
                     <div>
-                        <img src="@/assets/images/userImg2.png" alt="">
+                        <img :src="this.$store.state.Info.headImage||'../assets/images/userImg.png'" style="width: 66px;border-radius: 50%;" alt="">
                     </div>
                     <div>
-                        <p>张晓龙</p>
+                        <p>{{$store.state.Info.realName}}</p>
                         <p>主任医师</p>
                     </div>
                 </div>
                 <div class="chat-info-bottom">
-                    <div :class="activeIndex==0?'active':''" @click="activeIndex=0">
+                    <div :class="activeIndex==0?'active':''" @click="activeIndex=0;patientInfoBoolean=true;patientInfo={};chatUserInfo={};">
                         <span>正在接待</span>
-                        <!-- <span class="after">3</span> -->
+                        <span class="after" v-show="userList.length">{{userList.length}}</span>
                     </div>
-                    <div :class="activeIndex==1?'active':''" @click="activeIndex=1">
+                    <div :class="activeIndex==1?'active':''" @click="activeIndex=1;patientInfoBoolean=true;patientInfo={};chatUserInfo={};">
                         <span>待接诊</span>
-                        <span class="after">2</span>
+                        <span class="after" v-show="userList.length">{{userList2.length}}</span>
                     </div>
                 </div>
                 <div class="chat-user-list">
-                    <div v-for="(item,i) in userList" :key="i" :class="i==0?'chating':''">
+                    <div v-for="(item,index) in userList" v-show="activeIndex==0" :key="'userList-'+index" :class="index==activePatient?'chating':''" @click="doctorContentPatient(index,item.patientId)">
                         <div>
-                            <img :src="item.img" alt="">
+                            <img :src="item.img" v-show="item.img" alt="">
+                            <img src="@/assets/images/perImg.png" v-show="!item.img" alt="">
                         </div>
                         <div>
                             <p>
-                                <span>{{item.name}}</span>
-                                <span>{{item.age}}</span>
-                                <span>{{item.gender}}</span>
+                                <span>{{item.realName||'暂无'}}</span>&nbsp;&nbsp;
+                                <span>{{item.age||'暂无'}}</span>&nbsp;&nbsp;
+                                <span>{{item.sex==1?'男':'女'}}</span>
                             </p>
-                            <i>{{item.msg}}</i>
+                            <i>{{item.lastMessage||'暂无...'}}</i>
+                        </div>
+                    </div>
+                    <div v-for="(items,key) in userList2" v-show="activeIndex==1" :key="key" :class="key==activePatient?'chating':''" @click="doctorCheckPatient(key,items.patientId)">
+                        <div>
+                            <img :src="items.img" v-show="items.img" alt="">
+                            <img src="@/assets/images/perImg.png" v-show="!items.img" alt="">
+                        </div>
+                        <div>
+                            <p>
+                                <span>{{items.realName||'暂无'}}</span>&nbsp;&nbsp;
+                                <span>{{items.age||'暂无'}}</span>&nbsp;&nbsp;
+                                <span>{{items.sex==1?'男':'女'}}</span>
+                            </p>
+                            <i>{{items.msg||'暂无...'}}</i>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="chat-room-right">
-                <div class="room-right-top">
+            <div class="chat-room-right" v-show="patientInfoBoolean&&activeIndex==0">
+                <div class="room-right-top" v-show="patientInfoBoolean&&chatUserInfo.realName">
                     <p>
-                        <span>刘晓霞</span>
-                        <span>50</span>
-                        <span>女</span>
+                        <span>{{chatUserInfo.realName||'暂无'}}</span>
+                        <span>{{chatUserInfo.age||'暂无'}}</span>
+                        <span>{{chatUserInfo.sex==1?'男':'女'||'暂无'}}</span>
                     </p>
-                    <router-link to="/">开处方</router-link>
+                    <a @click="routerToCF" v-show="interRecord">开处方</a>
                 </div>
-                <div class="room-msg-list">
+                <div class="room-msg-list" v-show="patientInfoBoolean&&chatUserInfo.realName">
                     <div class="room-msg-content">
                         <div class="msg-list">
                             <div v-for="(item,i) in msgList" :key="i" :class="item.user=='me'?'mepar':''">
@@ -55,7 +70,8 @@
                                         <img :src="item.img" alt="">
                                     </div>
                                     <div class="item-msg">
-                                        {{item.msg}}
+                                        <span v-show="item.type==1">{{item.msg}}</span>
+                                        <img :src="item.msg" v-show="item.type==2" alt="">
                                     </div>
                                 </div>
                             </div>
@@ -67,7 +83,7 @@
                                 </div>
                                 <label>
                                     <img src="@/assets/images/file.png" alt="">
-                                    <input type="file" accept="image/*" style="display:none;">
+                                    <input type="file" accept="image/*"  style="display:none;" @change="upload_photo" ref="inputer">
                                 </label>
                             </div>
                             <div v-show="fun" class="more_box">
@@ -173,51 +189,23 @@
                         </div>
                         <div v-show="userTitleIndex==1?true:false" class="msg-info-over">
                             <div class="room-user-name">
-                                <span>刘晓霞</span>
-                                <span>50</span>
-                                <span>女</span>
+                                <span>{{chatUserInfo.realName||'暂无'}}</span>
+                                <span>{{chatUserInfo.age||'暂无'}}</span>
+                                <span>{{chatUserInfo.sex==1?'男':'女'||'暂无'}}</span>
                             </div>
                             <div class="room-user-condition">
                                 <p>
                                     <span>病情主诉</span>
                                 </p>
-                                <p>之前高血压一直维持低压100左右，高压140左右，自从上个月有一次外面干活天气太热，头晕，回来量血压，低压都140左右，高压180左右，一直持续到现在，吃降压药血压也没降下来，现在这样的情况应该如何处理？现在没有出现头晕。</p>
+                                <p>{{chatUserInfo.illnessDescription||'暂无'}}</p>
                             </div>
                             <div class="room-user-condition">
                                 <p>
                                     <span>病情照片</span>
                                 </p>
                                 <div class="room-user-conditionPic">
-                                    <div>
-                                        <img src="@/assets/images/condition1.png" alt="">
-                                    </div>
-                                    <div>
-                                        <img src="@/assets/images/condition2.png" alt="">
-                                    </div>
-                                    <div>
-                                        <img src="@/assets/images/condition3.png" alt="">
-                                    </div>
-                                    <div>
-                                        <img src="@/assets/images/condition4.png" alt="">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="room-user-condition">
-                                <p>
-                                    <span>病情照片</span>
-                                </p>
-                                <div class="room-user-conditionPic">
-                                    <div>
-                                        <img src="@/assets/images/condition1.png" alt="">
-                                    </div>
-                                    <div>
-                                        <img src="@/assets/images/condition2.png" alt="">
-                                    </div>
-                                    <div>
-                                        <img src="@/assets/images/condition3.png" alt="">
-                                    </div>
-                                    <div>
-                                        <img src="@/assets/images/condition4.png" alt="">
+                                    <div v-for="(itemq,ind) in chatUserInfo.illnessImages" :key="ind">
+                                        <img style="height: 100%;" :src="itemq" alt="">
                                     </div>
                                 </div>
                             </div>
@@ -225,87 +213,110 @@
                         <div v-show="userTitleIndex==2?true:false" class="msg-info-over">
                             <div class="internet-illness">
                                 <p>
-                                    <span>刘晓霞</span>
-                                    <span>50</span>
-                                    <span>女</span>
+                                    <span>{{chatUserInfo.realName||'暂无'}}</span>
+                                    <span>{{chatUserInfo.age||'暂无'}}</span>
+                                    <span>{{chatUserInfo.sex==1?'男':'女'||'暂无'}}</span>
                                 </p>
-                                <p>身份证号:500230198812027652</p>
-                                <p>看诊时间:2020-02-20</p>
+                                <p>身份证号:{{chatUserInfo.idCard}}</p>
+                                <p>看诊时间:{{chatUserInfo.startTime||'暂无'}}</p>
                             </div>
                             <div class="room-user-condition">
                                 <p>
-                                    <span>病情主诉</span>
+                                    <span>基本信息</span>
                                 </p>
-                                <p>之前高血压一直维持低压100左右，高压140左右，自从上个月有一次外面干活天气太热，头晕，回来量血压，低压都140左右，高压180左右，一直持续到现在，吃降压药血压也没降下来，现在这样的情况应该如何处理？现在没有出现头晕。</p>
+                                <div class="user-info-time">
+                                    <!-- <el-date-picker
+                                    v-model="selectTime"
+                                    type="datetime"
+                                    disabled
+                                    placeholder="就诊时间"> -->
+                                    </el-date-picker>
+                                    <input type="text" placeholder="科室" v-model="this.$store.state.Info.list[0].deptName" disabled>
+                                </div>
+                            </div>
+                            <div class="room-user-condition">
+                                <p>
+                                    <span>主诉</span>
+                                </p>
+                                <div class="now-illness">{{chatUserInfo.illnessDescription||'暂无'}}</div>
                             </div>
                             <div class="room-user-condition">
                                 <p>
                                     <span>现病史</span>
                                 </p>
-                                <div class="now-illness">经过诊断判断为高血压患者，需要长期服药达到降压效果。</div>
+                                <div class="now-illness" :class="prescription?'pointerNone':''">
+                                    <textarea cols="30" rows="10" :class="prescription?'pointerNone':''" v-model="nowIllness"></textarea>
+                                </div>
                             </div>
                             <div class="room-user-condition">
                                 <p>
-                                    <span>已开处方</span>
+                                    <span>病情照片</span>
                                 </p>
-                                <p>豪降之 厄贝沙坦分散片 </p>
+                                <div class="room-user-conditionPic">
+                                    <div v-for="(itemq,ind) in chatUserInfo.illnessImages" :key="ind">
+                                        <img style="height: 100%;" :src="itemq" alt="">
+                                    </div>
+                                </div>
                             </div>
                             <div class="room-user-condition">
                                 <p>
-                                    <span>病情主诉</span>
+                                    <span>诊断</span>
                                 </p>
-                                <p>之前高血压一直维持低压100左右，高压140左右，自从上个月有一次外面干活天气太热，头晕，回来量血压，低压都140左右，高压180左右，一直持续到现在，吃降压药血压也没降下来，现在这样的情况应该如何处理？现在没有出现头晕。</p>
+                                <div class="now-illness" :class="prescription?'pointerNone':''">
+                                    <textarea cols="30" rows="10" :class="prescription?'pointerNone':''" v-model="diagnose" placeholder="诊断结果"></textarea>
+                                </div>
                             </div>
+                            <div class="room-user-condition">
+                                <p>
+                                    <span>诊疗措施</span>
+                                </p>
+                                <div class="now-illness">
+                                    <textarea cols="30" rows="10" :class="prescription?'pointerNone':''" v-model="treatment" placeholder="诊疗措施"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="positionBtn" v-show="userTitleIndex==2">
+                            <button @click="createdInter" v-show="!prescription">生成电子病历</button>
                         </div>
                     </div>
                 </div>
+            </div>
+            <div class="chat-room-right" v-show="!patientInfoBoolean&&activeIndex==1">
+                <div class="room-right-top">
+                    <p>
+                        <span>{{patientInfo.realName}}</span>
+                        <span>{{patientInfo.age}}</span>
+                        <span>{{patientInfo.sexName}}</span>
+                    </p>
+                    <p>2020-02-19 10:27</p>
+                </div>
+                <div class="patient-info-parent">
+                    <p>{{patientInfo.illnessDescription}}</p>
+                    <div class="patient-info-img">
+                        <div v-for="(itemw,inde) in patientInfo.illnessImage" :key="inde">
+                            <img :src="itemw"  alt="">
+                        </div>
+                    </div>
+                </div>
+                <button @click="connectChat(1,patientInfo.orderNo)">接诊</button>
+                <button @click="connectChat(2,patientInfo.orderNo)">取消</button>
             </div>
         </div>
     </div>
 </template>
 <script>
 export default {
+    
     data() {
         return {
             activeIndex:0,
 
-            userList:[
-                {img:require('@/assets/images/perImg.png'),name:"刘晓霞",age:50,gender:"女",msg:"之前血压一直维持低之前血压一直维持低之前血压一直维持低"},
-                {img:require('@/assets/images/perImg.png'),name:"刘晓霞",age:50,gender:"女",msg:"之前血压一直维持低之前血压一直维持低之前血压一直维持低"},
-                {img:require('@/assets/images/perImg.png'),name:"刘晓霞",age:50,gender:"女",msg:"之前血压一直维持低之前血压一直维持低之前血压一直维持低"},
-                {img:require('@/assets/images/perImg.png'),name:"刘晓霞",age:50,gender:"女",msg:"之前血压一直维持低之前血压一直维持低之前血压一直维持低"},
-                {img:require('@/assets/images/perImg.png'),name:"刘晓霞",age:50,gender:"女",msg:"之前血压一直维持低之前血压一直维持低之前血压一直维持低"},
-            ],
+            userList:[],
 
-            msgList:[
-                {
-                    type:0,//0文字,1.图文,2.文件
-                    user:"other",//病人
-                    img:require('@/assets/images/perImg.png'),
-                    msg:"之前血压一直维持低压100左右，高压140左右，上个月有一次外面干活感到头特别的晕"
-                },
+            userList2:[],
 
-                {
-                    type:0,//0文字,1.图文,2.文件
-                    user:"me",//本人
-                    img:require('@/assets/images/userImg2.png'),
-                    msg:"您好，为方便问诊，请描述一下血压最高值、目前的药物用法，以及血压控制情况？另外您的大动脉CTA存在继发性高血压的因素，是否测量过四肢血压？是否在心外科或血管外科就诊过？"
-                },
-
-                {
-                    type:0,//0文字,1.图文,2.文件
-                    user:"other",//病人
-                    img:require('@/assets/images/perImg.png'),
-                    msg:"去医院时血压198/113，现在降到150左右，低压正常  "
-                },
-
-                {
-                    type:0,//0文字,1.图文,2.文件
-                    user:"me",//本人
-                    img:require('@/assets/images/userImg2.png'),
-                    msg:"您的这种情况药物治疗效果往往不理想，建议到血管外科（有些医院是心外科）就诊，评估是否能够做手术，手术有微创和传统两种方法，如何选择取决于外科医生。"
-                }
-            ],
+            msgList:[],
 
             input_content:"",
 
@@ -314,16 +325,137 @@ export default {
             fun: 0,
 
             is_emoji: 0,
+
+            ws:null,
+
+            activePatient:-1,
+
+            activePatientId:1,
+
+            patientInfoBoolean:true,
+
+            patientInfo:{},
+
+            paramsDetails:"",
+
+            chatUserInfo:{},
+
+            chatingList:[],
+
+            chatList:[],
+
+            isSend:false,
+
+            // chatUserInfo.startTime
+            selectTime:'',
+
+            // this.$store.state.Info.list[0].hospitalName
+            selectKS:'',
+
+            ddepartment:[
+                {value:"科室"}
+            ],
+
+            nowIllness:"",
+
+            diagnose:"",
+
+            treatment:"",
+
+            websocket:"",
+
+            interRecord:false,
+
+            prescription:false,
+
+            indexNumber:1,
+
         }
     },
-    
+
+    created () {
+        const that = this;
+
+        if ("WebSocket" in window){
+            // 打开一个 web socket
+            // that.ws = new WebSocket(`ws://192.168.199.215/Websocket/D`+that.$store.state.Info.id);
+            that.ws = new WebSocket(`ws://122.112.206.233:9528/Websocket/D`+that.$store.state.Info.id);
+                
+            that.ws.onopen = function(){
+                // Web Socket 已连接上，使用 send() 方法发送数据
+                that.ws.send(JSON.stringify({
+                    groupId:'D'+that.$store.state.Info.id,
+                    sendId:'D'+that.$store.state.Info.id,
+                    sendType:1,
+                    receiveId:'P'+that.activePatientId,
+                    receiveType:2,
+                    type:'join',
+                    content:"医生开始链接患者",
+                }));
+                console.log("连接成功...");
+            };
+                
+            that.ws.onmessage = that.websocketonmessage;
+                
+            that.ws.onclose = function (ev) {
+                console.log("WebSocket连接关闭");
+                that.ws.close();
+            }
+        }else{
+            console.log("您的浏览器不支持 WebSocket!");
+        }
+
+        that.getPatientUnderway();
+        
+        that.findWatingPatientList();
+
+    },
+
+    destroyed: function() {
+        this.ws.onclose();
+    },
+
     methods: {
+        upload_photo: function(){
+            const that = this;
+
+            let inputDOM = that.$refs.inputer;
+
+            let file = inputDOM.files;
+
+            // 上传的图片
+            console.log(file)
+
+            // 上传图片接口尚未写
+            // this.$post('/doctorShift/getDatePeriod', {
+            //     imgUrL:'https://img.ivsky.com/img/tupian/t/201505/18/california-001.jpg'
+            // }).then(res => {
+            //     console.log(res)
+            // })
+            
+            let httpImg = 'https://img.ivsky.com/img/tupian/t/201505/18/california-001.jpg'
+
+            // 发送消息
+            that.ws.send(JSON.stringify({
+                    groupId:'D'+that.$store.state.Info.id,      //医生ID
+                    sendId:'D'+that.$store.state.Info.id,       //发送者ID
+                    // 固定1
+                    sendType:1,                                 //发送者属性    1医生2患者
+                    receiveId:'P'+that.activePatientId,                            //接收者ID
+                    // 固定2
+                    receiveType:2,                              //接收者属性    1医生2患者
+                    // 根据
+                    type:2,                                     //发送消息类型  1文本2图片
+                    content:httpImg,                            //内容本体
+                })
+            )
+        },
+
         refScroll(){
             this.$nextTick(() => {
                 var container = document.querySelector('.msg-list')
                 container.scrollTop = container.scrollHeight
             })
-            // this.input_content = ''
         },
 
         emoji(event) {
@@ -352,20 +484,336 @@ export default {
         },
 
         submit() {
-            const that = this
-            if (that.input_content.length <= 1) {
+            const that = this;
+
+            let msgType = 1;
+
+            if (that.input_content.length <= 0) {
+                this.$message.error('消息内容不能为空!!!')
                 return false;
-            }
-            // that.msgs.push({
-            // 	imgURL:JSON.parse(sessionStorage.getItem('user')).avatar,
-            // 	msg_type: 1, //1文字,2图片,3音频,4视频
-            // 	type: 1, //1自己,2对方
-            // 	content: that.input,
-            // })
-            that.send(that.input)
-            that.input = ''
-            that.scroll()
+            };
+
+            // 判断是否包含图片
+            // if(that.input_content){
+            //     msgType=2
+            // }
+
+            // 发送消息
+            that.ws.send(JSON.stringify({
+                    groupId:'D'+that.$store.state.Info.id,      //医生ID
+                    sendId:'D'+that.$store.state.Info.id,       //发送者ID
+                    // 固定1
+                    sendType:1,                                 //发送者属性    1医生2患者
+                    receiveId:'P'+that.activePatientId,                            //接收者ID
+                    // 固定2
+                    receiveType:2,                              //接收者属性    1医生2患者
+                    type:msgType,      
+                    content:that.input_content,                 //内容本体
+                })
+            )
+
+            that.msgList.push({
+                type:msgType,
+                user:'me',
+                img:require('@/assets/images/userImg2.png'),
+            	msg: that.input_content,
+            })
+
+            that.input_content = ''
+            
+            that.refScroll()
         },
+
+        websocketonmessage(e){ //数据接收 
+            const that = this;
+            const redata = JSON.parse(e.data);
+            //注意：长连接我们是后台直接1秒推送一条数据， 
+            //但是点击某个列表时，会发送给后台一个标识，后台根据此标识返回相对应的数据，
+            //这个时候数据就只能从一个出口出，所以让后台加了一个键，例如键为1时，是每隔1秒推送的数据，为2时是发送标识后再推送的数据，以作区分
+            if(redata.type=='return'){
+                // if(JSON.parse(redata.content).onlineCheck){
+                    console.log('聊天对象在线')
+                // }else{
+                    // that.$message.error('请检查您的网络或者对方尚未上线!')
+                //     that.websocketclose
+                //     return ;
+                // }
+            }
+
+            if(redata.type=='erro'){
+                that.$message.error('请检查您的网络!')
+            }
+
+            if(redata.type=='permissionError'){
+                that.$message.error('请检查您的网络!')
+            }
+
+            if(redata.type=='chatDenied'){
+                that.$message.error('对方繁忙，暂时无法连接通信!')
+            }
+
+            if(redata.type=='offline'){
+                that.$message.error('对方尚未上线，暂时无法连接通信!')
+            }
+
+            if(redata.type=='chatAccept'){
+
+                const that = this;
+                
+                // 将患者从待就诊移入就诊中  需要接口  不用做  已用其他代替
+
+                that.findWatingPatientList();
+                // that.getPatientUnderway();
+            
+                that.$get("/patRegisteredUnderway/getPatientUnderway", {
+                    hospId:1
+                }).then(function(res) {
+                    if (res.code == 200) {
+                        that.chatingList=res.data
+                    } else {
+                        that.$message.error({
+                            message: res.message,
+                        });
+                    }
+                })
+                .catch(function(res) {
+                    console.log(res);
+                });
+
+            }
+
+            if(redata.type=='complete'){
+                
+                // 调用接口将患者移入！已完成列表！中  需要接口  优先
+
+
+                // 调节接口 刷新带就诊和就诊中列表
+                that.getPatientUnderway();
+
+            }
+
+            if(redata.sendType==2){
+                that.msgList.push({
+                    type:redata.type,
+                    user:'other',
+                    img:require('@/assets/images/perImg.png'),
+                    msg: redata.content,
+                })
+            }
+
+            // if(redata.sendId==`D${that.$store.state.Info.id}`&&redata.sendType==1){
+            //     that.msgList.push({
+            //         type:redata.type,
+            //         user:'me',
+            //         img:require('@/assets/images/userImg2.png'),
+            //         msg: redata.content,
+            //     })
+            // }
+
+
+
+            that.refScroll()
+        },
+
+        websocketclose(e){ //关闭
+            console.log("connection closed ( webscoket已经关闭)"); 
+        },
+
+        doctorContentPatient(i,id){
+            const that = this;
+            that.activePatient = i;
+            that.activePatientId = id;
+            that.patientInfoBoolean=true;
+            that.ws.send(JSON.stringify({
+                    groupId:'D'+that.$store.state.Info.id,     //医生ID
+                    sendId:'D'+that.$store.state.Info.id,      //发送者ID
+                    // 固定1
+                    sendType:1,                                //发送者属性    1医生2患者
+                    // this.activePatientId
+                    receiveId:'P'+that.activePatientId,        //接收者ID
+                    // 固定2
+                    receiveType:2,                             //接收者属性    1医生2患者
+                    type:'startTalk',                          //发送消息类型  1文本2图片
+                    content:'点击了患者头像',                   //内容本体
+                })
+            )
+
+            that.chatUserInfo=that.chatingList[i]
+
+            console.log(that.chatUserInfo)
+
+            that.$get(`/users/patCaseHistory/findByOrderNo/${that.chatingList[i].orderNo}`).then(function(res) {
+                if(!(res.data==null)&&res.data.currentMedicalHistory){
+                    that.nowIllness=res.data.currentMedicalHistory;
+                    that.diagnose=res.data.preliminaryDiagnosis;
+                    that.treatment=res.data.curePlan;
+                    that.prescription=true
+                    if(res.data.hasPrescript==1){
+                        that.interRecord=false
+                    }else{
+                        that.interRecord=true
+                    }
+                }else{
+                    that.nowIllness='';
+                    that.diagnose='';
+                    that.treatment='';
+                    that.interRecord=false
+                    that.prescription=false
+                }
+            })
+            .catch(function(res) {
+                console.log(res);
+            });
+
+            that.msgList=[]
+
+            that.$get(`/patDoctorMessage/getHistoryMeseeage`,{
+                index:that.indexNumber,
+                receiverId:id,
+                sendId:that.$store.state.Info.id
+            }).then(function(res) {
+                for(var i=0;i<res.data.length;i++){
+                    that.msgList.unshift({
+                        type:res.data[i].msgType,
+                        user:res.data[i].senderId!=that.$store.state.Info.id?'other':'me',
+                        img:res.data[i].senderId!=that.$store.state.Info.id?require('@/assets/images/perImg.png'):require('@/assets/images/userImg2.png'),
+                        msg: res.data[i].content,
+                    })
+                }
+                that.refScroll()
+            })
+            .catch(function(res) {
+                console.log(res);
+            });
+
+
+
+
+        },
+
+        doctorCheckPatient(i,id){
+            const that = this;
+            
+            that.patientInfoBoolean=false;
+
+            that.patientInfo=that.chatList[i]
+            
+        },
+
+        connectChat(i,id){
+            const that = this;
+            that.$get("/patRegisteredWatingDiagnosis/watingList/Choose", {
+                chooseType:i,
+                orderNo:id
+            }).then(function(res) {
+                if (res.code == 200) {
+
+                    that.getPatientUnderway();
+                    
+                    that.findWatingPatientList();
+
+                } else {
+                    that.$message.error({
+                        message: res.message,
+                    });
+                }
+            })
+            .catch(function(res) {
+                console.log(res);
+            });
+
+        },
+
+        findWatingPatientList(){
+            const that = this;
+            that.$get("/patRegisteredWatingDiagnosis/findWatingPatientList", {
+                hospId:1
+            }).then(function(res) {
+                if (res.code == 200) {
+                    that.userList2=that.chatList=res.data
+                    // that.$store.commit("indexNumber/SET_STATE", {'e':res.data.length});
+                } else {
+                    that.$message.error({
+                        message: res.message,
+                    });
+                }
+            })
+            .catch(function(res) {
+                console.log(res);
+            });
+        },
+
+        getPatientUnderway(){
+            const that = this;
+
+            that.$get("/patRegisteredUnderway/getPatientUnderwayWithMessage", {
+                hospId:1
+            }).then(function(res) {
+                if (res.code == 200) {
+
+                    that.userList=that.chatingList=res.data
+
+                    that.paramsDetails=that.$route.params
+                    console.log('开始查询接受患者的订单号')
+                    for(var i = 0; i < that.userList.length; i++){
+                        if(that.userList[i].orderNo==that.paramsDetails.orderNo){
+                            console.log('找到患者的订单号并且触发点击患者头像事件')
+                            that.doctorContentPatient(i,that.paramsDetails.id);
+                        }
+                    }
+                } else {
+                    that.$message.error({
+                        message: res.message,
+                    });
+                }
+            })
+            .catch(function(res) {
+                console.log(res);
+            });
+        },
+    
+        createdInter(){
+            const that = this;
+            if(that.nowIllness==''||that.diagnose==""||that.treatment==""){
+                that.$message.error('您尚有必要数据未填写!')
+                return ;
+            }
+
+            that.$post("/users/patient/createCaseHistory", {
+                orderNo:that.chatUserInfo.orderNo,
+                chiefComplaint:that.chatUserInfo.illnessDescription,
+                patientId:that.chatUserInfo.patientId,
+                currentMedicalHistory:that.nowIllness,
+                preliminaryDiagnosis:that.diagnose,
+                curePlan:that.treatment,
+                departmentName:this.$store.state.Info.list[0].deptName,
+                hospId:1,
+            }).then(function(res) {
+                if (res.code == 200) {
+                    that.$message.success('生成电子病历成功!')
+                    that.interRecord=true;
+                    that.prescription=true;
+                } else {
+                    that.$message.error({
+                        message: res.message,
+                    });
+                }
+            })
+            .catch(function(res) {
+                console.log(res);
+            });
+        },
+
+        routerToCF(){
+            const that = this
+            that.$router.push({
+                name:"openPrescription",
+                query: {
+                    obj: that.chatUserInfo,
+                    details:[],
+                }
+            })
+        }
     },  
 }
 </script>
@@ -465,6 +913,7 @@ export default {
         box-sizing: border-box;
         background: #fff;
         height: calc(100% - 57px - 107px);
+        overflow-y: auto;
     }
 
     .chat-user-list>div{
@@ -579,47 +1028,56 @@ export default {
     }
 
     /* 设置滚动条的样式 */
-    .msg-list::-webkit-scrollbar {
+    .msg-list::-webkit-scrollbar ,
+    .chat-user-list::-webkit-scrollbar {
         width: 10px;
     }
 
     /* 滚动槽 */
-    .msg-list::-webkit-scrollbar-track {
+    .msg-list::-webkit-scrollbar-track ,
+    .chat-user-list::-webkit-scrollbar-track {
         border-radius: 8px;
     }
 
     /* 滚动条滑块 */
-    .msg-list::-webkit-scrollbar-thumb {
+    .msg-list::-webkit-scrollbar-thumb ,
+    .chat-user-list::-webkit-scrollbar-thumb {
         border-radius: 8px;
         border: 2px solid rgb(95, 95, 95);
         box-shadow: 8px 0 0 rgb(95, 95, 95) inset;
     }
 
-    .msg-list::-webkit-scrollbar-thumb:hover {
+    .msg-list::-webkit-scrollbar-thumb:hover ,
+    .chat-user-list::-webkit-scrollbar-thumb:hover {
         box-shadow: 8px 0 0 rgb(95, 95, 95) inset;
         border-color: rgb(95, 95, 95);
     }
 
-    .msg-list::-webkit-scrollbar-thumb:window-inactive {
+    .msg-list::-webkit-scrollbar-thumb:window-inactive ,
+    .chat-user-list::-webkit-scrollbar-thumb:window-inactive {
         display: none;
     }
 
-    .msg-list::-webkit-scrollbar {
+    .msg-list::-webkit-scrollbar ,
+    .chat-user-list::-webkit-scrollbar {
         width: 0px;
         height: 0px;
     }
 
-    .msg-list:hover::-webkit-scrollbar {
+    .msg-list:hover::-webkit-scrollbar ,
+    .chat-user-list:hover::-webkit-scrollbar {
         width: 5px;
     }
 
-    .msg-list::-webkit-scrollbar-thumb {
+    .msg-list::-webkit-scrollbar-thumb ,
+    .chat-user-list::-webkit-scrollbar-thumb {
         border-radius: 10px;
         border: 2px solid rgb(231, 231, 231);
         box-shadow: 5px 0 0 rgb(231, 231, 231) inset;
     } 
 
-    .msg-list {
+    .msg-list  ,
+    .chat-user-list{
         overflow-y: overlay;
         word-wrap: break-word;
     }
@@ -654,7 +1112,13 @@ export default {
         border-top-left-radius: 0;
         margin-left: 15px;
         white-space: pre-wrap;
+        max-width: 80%;
     }
+
+    .item-msg img{
+        width: 100%;
+    }
+
 
     .me .item-msg{
         border-radius: 7px;
@@ -803,6 +1267,14 @@ export default {
         padding: 30px 20px 0 20px;
     }
 
+    .room-user-condition .now-illness textarea{
+        width: 100%;
+        height: auto;
+        border: 0;
+        resize: none;
+        background: none;
+    }
+
     .room-user-condition p span{
         display: inline-block;
         padding-bottom: 16px;
@@ -899,7 +1371,7 @@ export default {
     } 
 
     .msg-info-over {
-        height: calc(100% - 51px);
+        height: calc(100% - 51px - 60px);
         overflow-y: overlay;
         word-wrap: break-word;
     }
@@ -957,4 +1429,107 @@ export default {
 		border-radius: 0;
 		background: rgba(0, 0, 0, 0.1);
 	}
+
+    .patient-info-parent{
+        padding: 15px 29px 47px 27px;
+    }
+
+    .patient-info-parent p{
+        color: #848484;
+    }
+
+    .patient-info-img{
+        margin-top: 38px;
+        display: flex;
+        justify-content: flex-start;
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .patient-info-img div{
+        width: calc(100%/4);
+        height: 160px;
+    }
+
+    .patient-info-img div img{
+        height: 100%;
+    }
+
+    .patient-info-img div:nth-child(n+5){
+        margin-top: 16px;
+    }
+
+    .patient-info-parent+button{
+        margin-left: 27px;
+        width: 128px;
+        height: 35px;
+        color: #fff;
+        background: #5a75f6;
+        border: 0;
+        border-radius: 35px;
+        cursor: pointer;
+    }
+
+    .patient-info-parent+button+button{
+        margin-left: 27px;
+        width: 128px;
+        height: 35px;
+        color: #666;
+        background: #eaeaea;
+        border: 0;
+        border-radius: 35px;
+        cursor: pointer;
+    }
+
+    .pointerNone{
+        pointer-events: none;
+
+        cursor: default;
+
+        opacity: 0.6;
+    }
+
+    .user-info-time{
+        margin-top: 9px;
+    }
+
+    .user-info-time /deep/ .el-input{
+        width: 244px;
+        height: 40px;
+    }
+
+    .user-info-time /deep/ input{
+        width: 244px;
+        height: 40px;
+        border: 1px solid #d1d1d1;
+        border-radius: 0;
+    }
+    
+    .user-info-time input{
+        margin-top: 7px;
+        background: none;
+        box-sizing: border-box;
+        padding-left: 9px;
+    }
+
+    .positionBtn{
+        width: 100%;
+        height: 60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .positionBtn button{
+        width: 151px;
+        height: 33px;
+        font-size: 16px;
+        color: #fff;
+        background: #38bff7;
+        border-radius: 33px;
+        border: 0;
+        cursor: pointer;
+        
+    }
+
 </style>
